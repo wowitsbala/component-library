@@ -142,12 +142,35 @@ pipeline:
                         paths:
                           - report.xml
               - step:
-                  identifier: build
-                  name: build
-                  spec:
-                    command: npm run build
-                  timeout: ""
                   type: Run
+                  name: DEBUG STEP - Where Are We
+                  identifier: Where_Are_We
+                  spec:
+                    shell: Sh
+                    command: |-
+                      echo '=============================================================='
+                      echo '================DEBUG STEP: PRE-BUILD STAGE==================='
+                      echo '=============================================================='
+                      echo ''
+                      echo '=============================================================='
+                      echo 'STEP 1: What Is In Our Home Directory?'
+                      echo '=============================================================='
+                      ls
+
+                      echo '=============================================================='
+                      echo 'STEP 2: What Is Our Present Working Directory?'
+                      echo '=============================================================='
+                      pwd
+
+                      echo '=============================================================='
+                      echo 'STEP 3: Reading The Contexts Of Report.xml'
+                      echo '=============================================================='
+                      # cat report.xml
+
+                      echo '=============================================================='
+                      echo 'STEP 4: Verify Dockerfile Resources Pulled Down'
+                      echo '=============================================================='
+                      ls ubm-app-configs
           platform:
             os: Linux
             arch: Amd64
