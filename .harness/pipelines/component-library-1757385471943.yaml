@@ -16,6 +16,7 @@ pipeline:
         spec:
           caching:
             enabled: true
+            paths: []
           cloneCodebase: true
           execution:
             steps:
@@ -105,12 +106,16 @@ pipeline:
                   timeout: ""
                   type: Run
               - step:
-                  identifier: test
-                  name: test
+                  type: GitClone
+                  name: Pull the Dockerfile  Rsources
+                  identifier: Pull_the_Dockerfile_resources
                   spec:
-                    command: npm run test
-                  timeout: ""
-                  type: Run
+                    connectorRef: UBM_App_Configs_Harness_Cloud
+                    cloneDirectory: /harness/ubm-app-configs
+                    build:
+                      type: branch
+                      spec:
+                        branch: main
               - step:
                   identifier: lint
                   name: lint
@@ -126,9 +131,12 @@ pipeline:
                   timeout: ""
                   type: Run
           platform:
-            arch: Amd64
             os: Linux
+            arch: Amd64
           runtime:
-            spec: {}
             type: Cloud
+            spec: {}
+          buildIntelligence:
+            enabled: true
         type: CI
+        description: ""
