@@ -117,12 +117,30 @@ pipeline:
                       spec:
                         branch: main
               - step:
-                  identifier: lint
-                  name: lint
-                  spec:
-                    command: npm run lint
-                  timeout: ""
                   type: Run
+                  name: Run Unit Testing for Component
+                  identifier: Install_and_Run_NPM
+                  spec:
+                    shell: Sh
+                    command: |-
+                      echo '=============================================================='
+                      echo '==============RUN UNIT TESTING FOR COMPONENT=================='
+                      echo '=============================================================='
+                      echo ''
+                      echo '=============================================================='
+                      echo 'STEP 1: Clear npm Cache Forcefully'
+                      echo '=============================================================='
+                      npm cache clean --force
+
+                      echo '=============================================================='
+                      echo 'STEP 2: Run Test:Pipeline In Package.json For Component'
+                      echo '=============================================================='
+                      npm run test:pipeline
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - report.xml
               - step:
                   identifier: build
                   name: build
