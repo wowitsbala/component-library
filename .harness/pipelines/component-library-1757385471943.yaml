@@ -21,9 +21,87 @@ pipeline:
             steps:
               - step:
                   identifier: installdependencies
-                  name: install dependencies
+                  name: Install dependencies and Build Storybook
                   spec:
-                    command: npm install
+                    shell: Sh
+                    command: |-
+                      echo '=============================================================='
+                      echo '===================INSTALL DEPENDENCIES======================='
+                      echo '=============================================================='
+                      echo ''
+
+                      while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+                         echo "Waiting for apt to release the lock..."
+                         sleep 5
+                      done
+
+                      echo '=============================================================='
+                      echo 'STEP 1: Update Package List With Latest Info On Versions of Packages + Dependencies'
+                      echo '=============================================================='
+                      sudo apt-get update
+
+                      echo '=============================================================='
+                      echo 'STEP 2: Remove Existing Installations of Node.js and npm'
+                      echo '=============================================================='
+                      #sudo apt-get remove -y nodejs npm
+                      echo 'Disabled'
+
+                      echo '=============================================================='
+                      echo 'STEP 3: Clear The npm Cache To Ensured Cached Files Are Removed'
+                      echo '=============================================================='
+                      #sudo npm cache clean -f
+                      echo 'Disabled'
+
+                      echo '=============================================================='
+                      echo 'STEP 4: Delete Global Node.js Modules Directory To REmove Globally Installed Packages'
+                      echo '=============================================================='
+                      #sudo rm -rf /usr/local/lib/node_modules
+                      echo 'Disabled'
+
+                      echo '=============================================================='
+                      echo 'STEP 5: Remove Local npm Cache Directory To Ensure Complete Removal Of Cached Files'
+                      echo '=============================================================='
+                      #sudo rm -rf ~/.npm
+                      echo 'Disabled'
+
+                      echo '=============================================================='
+                      echo 'STEP 6: Add NodeSource API Repository For Node.JS 20.x'
+                      echo '=============================================================='
+                      curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+
+                      echo '=============================================================='
+                      echo 'STEP 7: Install Latest Version Of Node.js'
+                      echo '=============================================================='
+                      sudo apt-get install -y --allow-downgrades nodejs=20.17.*
+                      #sudo apt-get install -y nodejs
+
+                      echo '=============================================================='
+                      echo 'STEP 8: Install Latest Version Of npm'
+                      echo '=============================================================='
+                      sudo npm install -g npm@latest
+
+                      echo '=============================================================='
+                      echo 'STEP 9: Display Installed Versions of Node.js and npm'
+                      echo '=============================================================='
+                      echo "Node.js version:"
+                      node -v
+                      echo "npm version:"
+                      npm -v
+
+                      echo '=============================================================='
+                      echo 'STEP 10: Install The Jest-JUnit Package As A Development Dependency'
+                      echo '=============================================================='
+                      npm install jest-junit --save-dev
+
+                      echo '=============================================================='
+                      echo 'STEP 11: Build Storybook'
+                      echo '=============================================================='
+                      npm ci
+                      npm run build-storybook
+                      echo 'Storybook build completed successfully.'
+                      echo '=============================================================='
+                      echo '========================ALL DONE!============================='
+                      echo '=============================================================='
                   timeout: ""
                   type: Run
               - step:
