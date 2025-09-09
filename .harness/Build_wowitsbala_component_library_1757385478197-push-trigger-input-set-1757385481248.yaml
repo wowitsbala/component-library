@@ -1,0 +1,14 @@
+inputSet:
+  name: Build_wowitsbala_component_library_1757385478197-push-trigger-input-set
+  identifier: Build_wowitsbala_component_library_1757385478197pushtriggerinputset
+  orgIdentifier: default
+  projectIdentifier: componentlibrary
+  pipeline:
+    identifier: Build_wowitsbala_component_library_1757385478197
+    properties:
+      ci:
+        codebase:
+          build:
+            type: branch
+            spec:
+              branch: <+trigger.branch>
