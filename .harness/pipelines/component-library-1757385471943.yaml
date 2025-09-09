@@ -223,6 +223,30 @@ pipeline:
                         echo "Failed to save Docker image locally."
                         exit 1
                       fi
+              - step:
+                  type: PrismaCloud
+                  name: Run PrismaCloud Scan
+                  identifier: Run_PrismaCloud_Scan
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: container
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                    settings:
+                      JOB_NAME: UBM-stress-ubmedia-audience-frontend-build
+                    privileged: true
+                    image:
+                      type: local_image
+                      tag: <+execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>
+                      name: pre-scanned-stress-admin-backend
+                    auth:
+                      access_token: <+pipeline.variables.PrismaScanTokenForPOC>
+                      access_id: 84e5d5e8-b45d-4d61-99a4-e8009ef45b29
+                      domain: https://us-east1.cloud.twistlock.com/us-2-158257716
           platform:
             os: Linux
             arch: Amd64
