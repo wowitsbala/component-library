@@ -172,6 +172,28 @@ pipeline:
                       echo '=============================================================='
                       ls ubm-app-configs
               - step:
+                  type: Sonarqube
+                  name: Run SonarQube Scan
+                  identifier: Run_SonarQube_Scan
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: repository
+                      workspace: <+execution.steps.Run_1.output.outputVariables.HARNESS_DIRECTORY>
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                      args:
+                        cli: "-Dsonar.sources=src -Dsonar.branch.name=<+pipeline.properties.ci.codebase.build.spec.branch> -Dsonar.tests=src -Dsonar.exclusions=src/**/**.test.js,src/**/__test_data/**,src/server.js,src/**/**.test.tsx,src/**/**test.ts -Dsonar.inclusions=src/** -Dsonar.test.inclusions=src/**/*.test.tsx,src/**/*.test.ts,src/**/*.test.js,src/**/*.test.jsx -Dsonar.coverage.exclusions=src/__test_data/**,testdata/*,src/server.js,src/**/*.test.js,src/**/__test_data/*.json,src/**/*.stories.js,src/**/**/**.test.tsx,src/**/**/**.test.ts -Dsonar.qualitygate=DSP-frontend-QG -Dsonar.profile=DSP-Sonar-JavaScript -Dsonar.core.codeCoveragePlugin=clover -Dsonar.dynamicAnalysis=reuseReports"
+                    auth:
+                      access_token: <+pipeline.variables.sonar>
+                      domain: http://sonar.ulta.com/
+                      ssl: true
+                    tool:
+                      project_key: ubm-component-library
+              - step:
                   type: Run
                   name: Build Image
                   identifier: Build_Image
