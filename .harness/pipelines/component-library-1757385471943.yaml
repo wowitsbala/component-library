@@ -251,8 +251,9 @@ pipeline:
             os: Linux
             arch: Amd64
           runtime:
-            type: Docker
-            spec: {}
+            type: Cloud
+            spec:
+              nestedVirtualization: true
           buildIntelligence:
             enabled: true
         type: CI
