@@ -171,6 +171,36 @@ pipeline:
                       echo 'STEP 4: Verify Dockerfile Resources Pulled Down'
                       echo '=============================================================='
                       ls ubm-app-configs
+              - step:
+                  type: Run
+                  name: Build Image
+                  identifier: Build_Image
+                  spec:
+                    shell: Sh
+                    command: |-
+                      # Configurable Variables
+                      IMAGE_NAME="our-docker-repo/storybook"
+                      TAG="<+execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>"
+
+                      # Build Docker image
+                      echo "Building Docker image..."
+                      docker build -t $IMAGE_NAME:$TAG -f ubm-app-configs/docker/node/Dockerfile .
+
+                      # Confirmation message
+                      echo "Docker image built successfully: $IMAGE_NAME:$TAG"
+
+                      echo '=============================================================='
+                      echo 'Save the image locally as a tar file'
+                      echo '=============================================================='
+                      LOCAL_IMAGE_FILE="$IMAGE_NAME-$TAG.tar"
+                      docker save -o $LOCAL_IMAGE_FILE $IMAGE_NAME:$TAG
+
+                      if [ $? -eq 0 ]; then
+                        echo "Docker image saved locally as $LOCAL_IMAGE_FILE."
+                      else
+                        echo "Failed to save Docker image locally."
+                        exit 1
+                      fi
           platform:
             os: Linux
             arch: Amd64
