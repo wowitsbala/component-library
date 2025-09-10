@@ -1,0 +1,14 @@
+inputSet:
+  name: Build_wowitsbala_component_library_1757385478197-pr-trigger-input-set
+  identifier: Build_wowitsbala_component_library_1757385478197prtriggerinputset
+  orgIdentifier: default
+  projectIdentifier: componentlibrary
+  pipeline:
+    identifier: Build_wowitsbala_component_library_1757385478197
+    properties:
+      ci:
+        codebase:
+          build:
+            type: PR
+            spec:
+              number: <+trigger.prNumber>

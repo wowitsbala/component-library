@@ -1,0 +1,346 @@
+pipeline:
+  identifier: Build_wowitsbala_component_library_1757385478197
+  name: Build component-library
+  orgIdentifier: default
+  projectIdentifier: componentlibrary
+  properties:
+    ci:
+      codebase:
+        build: <+input>
+        connectorRef: account.Github_OAuth_1750965264531
+        repoName: wowitsbala/component-library
+  stages:
+    - stage:
+        identifier: build1
+        name: build
+        spec:
+          caching:
+            enabled: true
+            paths: []
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  identifier: installdependencies
+                  name: Install dependencies and Build Storybook
+                  spec:
+                    shell: Sh
+                    command: |-
+                      echo '=============================================================='
+                      echo '===================INSTALL DEPENDENCIES======================='
+                      echo '=============================================================='
+                      echo ''
+
+                      while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+                         echo "Waiting for apt to release the lock..."
+                         sleep 5
+                      done
+
+                      echo '=============================================================='
+                      echo 'STEP 1: Update Package List With Latest Info On Versions of Packages + Dependencies'
+                      echo '=============================================================='
+                      sudo apt-get update
+
+                      echo '=============================================================='
+                      echo 'STEP 2: Remove Existing Installations of Node.js and npm'
+                      echo '=============================================================='
+                      #sudo apt-get remove -y nodejs npm
+                      echo 'Disabled'
+
+                      echo '=============================================================='
+                      echo 'STEP 3: Clear The npm Cache To Ensured Cached Files Are Removed'
+                      echo '=============================================================='
+                      #sudo npm cache clean -f
+                      echo 'Disabled'
+
+                      echo '=============================================================='
+                      echo 'STEP 4: Delete Global Node.js Modules Directory To REmove Globally Installed Packages'
+                      echo '=============================================================='
+                      #sudo rm -rf /usr/local/lib/node_modules
+                      echo 'Disabled'
+
+                      echo '=============================================================='
+                      echo 'STEP 5: Remove Local npm Cache Directory To Ensure Complete Removal Of Cached Files'
+                      echo '=============================================================='
+                      #sudo rm -rf ~/.npm
+                      echo 'Disabled'
+
+                      echo '=============================================================='
+                      echo 'STEP 6: Add NodeSource API Repository For Node.JS 20.x'
+                      echo '=============================================================='
+                      curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+
+                      echo '=============================================================='
+                      echo 'STEP 7: Install Latest Version Of Node.js'
+                      echo '=============================================================='
+                      sudo apt-get install -y --allow-downgrades nodejs=20.17.*
+                      #sudo apt-get install -y nodejs
+
+                      echo '=============================================================='
+                      echo 'STEP 8: Install Latest Version Of npm'
+                      echo '=============================================================='
+                      sudo npm install -g npm@latest
+
+                      echo '=============================================================='
+                      echo 'STEP 9: Display Installed Versions of Node.js and npm'
+                      echo '=============================================================='
+                      echo "Node.js version:"
+                      node -v
+                      echo "npm version:"
+                      npm -v
+
+                      echo '=============================================================='
+                      echo 'STEP 10: Install The Jest-JUnit Package As A Development Dependency'
+                      echo '=============================================================='
+                      npm install jest-junit --save-dev
+
+                      echo '=============================================================='
+                      echo 'STEP 11: Build Storybook'
+                      echo '=============================================================='
+                      npm ci
+                      npm run build-storybook
+                      echo 'Storybook build completed successfully.'
+                      echo '=============================================================='
+                      echo '========================ALL DONE!============================='
+                      echo '=============================================================='
+                  timeout: ""
+                  type: Run
+              - step:
+                  type: GitClone
+                  name: Pull the Dockerfile  Rsources
+                  identifier: Pull_the_Dockerfile_resources
+                  spec:
+                    connectorRef: UBM_App_Configs_Harness_Cloud
+                    cloneDirectory: /harness/ubm-app-configs
+                    build:
+                      type: branch
+                      spec:
+                        branch: main
+              - step:
+                  type: Run
+                  name: Run Unit Testing for Component
+                  identifier: Install_and_Run_NPM
+                  spec:
+                    shell: Sh
+                    command: |-
+                      echo '=============================================================='
+                      echo '==============RUN UNIT TESTING FOR COMPONENT=================='
+                      echo '=============================================================='
+                      echo ''
+                      echo '=============================================================='
+                      echo 'STEP 1: Clear npm Cache Forcefully'
+                      echo '=============================================================='
+                      npm cache clean --force
+
+                      echo '=============================================================='
+                      echo 'STEP 2: Run Test:Pipeline In Package.json For Component'
+                      echo '=============================================================='
+                      npm run test:pipeline
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - report.xml
+              - step:
+                  type: Run
+                  name: DEBUG STEP - Where Are We
+                  identifier: Where_Are_We
+                  spec:
+                    shell: Sh
+                    command: |-
+                      echo '=============================================================='
+                      echo '================DEBUG STEP: PRE-BUILD STAGE==================='
+                      echo '=============================================================='
+                      echo ''
+                      echo '=============================================================='
+                      echo 'STEP 1: What Is In Our Home Directory?'
+                      echo '=============================================================='
+                      ls
+
+                      echo '=============================================================='
+                      echo 'STEP 2: What Is Our Present Working Directory?'
+                      echo '=============================================================='
+                      pwd
+
+                      echo '=============================================================='
+                      echo 'STEP 3: Reading The Contexts Of Report.xml'
+                      echo '=============================================================='
+                      # cat report.xml
+
+                      echo '=============================================================='
+                      echo 'STEP 4: Verify Dockerfile Resources Pulled Down'
+                      echo '=============================================================='
+                      ls ubm-app-configs
+              - step:
+                  type: Sonarqube
+                  name: Run SonarQube Scan
+                  identifier: Run_SonarQube_Scan
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: repository
+                      workspace: <+execution.steps.Run_1.output.outputVariables.HARNESS_DIRECTORY>
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                      args:
+                        cli: "-Dsonar.sources=src -Dsonar.branch.name=<+pipeline.properties.ci.codebase.build.spec.branch> -Dsonar.tests=src -Dsonar.exclusions=src/**/**.test.js,src/**/__test_data/**,src/server.js,src/**/**.test.tsx,src/**/**test.ts -Dsonar.inclusions=src/** -Dsonar.test.inclusions=src/**/*.test.tsx,src/**/*.test.ts,src/**/*.test.js,src/**/*.test.jsx -Dsonar.coverage.exclusions=src/__test_data/**,testdata/*,src/server.js,src/**/*.test.js,src/**/__test_data/*.json,src/**/*.stories.js,src/**/**/**.test.tsx,src/**/**/**.test.ts -Dsonar.qualitygate=DSP-frontend-QG -Dsonar.profile=DSP-Sonar-JavaScript -Dsonar.core.codeCoveragePlugin=clover -Dsonar.dynamicAnalysis=reuseReports"
+                    auth:
+                      access_token: <+pipeline.variables.sonar>
+                      domain: http://sonar.ulta.com/
+                      ssl: true
+                    tool:
+                      project_key: ubm-component-library
+              - step:
+                  type: Run
+                  name: Build Image
+                  identifier: Build_Image
+                  spec:
+                    shell: Sh
+                    command: |-
+                      # Configurable Variables
+                      IMAGE_NAME="our-docker-repo/storybook"
+                      TAG="<+execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>"
+
+                      # Build Docker image
+                      echo "Building Docker image..."
+                      docker build -t $IMAGE_NAME:$TAG -f ubm-app-configs/docker/node/Dockerfile .
+
+                      # Confirmation message
+                      echo "Docker image built successfully: $IMAGE_NAME:$TAG"
+
+                      echo '=============================================================='
+                      echo 'Save the image locally as a tar file'
+                      echo '=============================================================='
+                      LOCAL_IMAGE_FILE="$IMAGE_NAME-$TAG.tar"
+                      docker save -o $LOCAL_IMAGE_FILE $IMAGE_NAME:$TAG
+
+                      if [ $? -eq 0 ]; then
+                        echo "Docker image saved locally as $LOCAL_IMAGE_FILE."
+                      else
+                        echo "Failed to save Docker image locally."
+                        exit 1
+                      fi
+              - step:
+                  type: PrismaCloud
+                  name: Run PrismaCloud Scan
+                  identifier: Run_PrismaCloud_Scan
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: container
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                    settings:
+                      JOB_NAME: UBM-stress-ubmedia-audience-frontend-build
+                    privileged: true
+                    image:
+                      type: local_image
+                      tag: <+execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>
+                      name: pre-scanned-stress-admin-backend
+                    auth:
+                      access_token: <+pipeline.variables.PrismaScanTokenForPOC>
+                      access_id: 84e5d5e8-b45d-4d61-99a4-e8009ef45b29
+                      domain: https://us-east1.cloud.twistlock.com/us-2-158257716
+              - step:
+                  type: Run
+                  name: Push Image
+                  identifier: Push_Image
+                  spec:
+                    shell: Sh
+                    command: |-
+                      echo '=============================================================='
+                      echo '======== Push Image to Registry ============'
+                      echo '=============================================================='
+                      echo ''
+
+                      echo '=============================================================='
+                      echo 'STEP 1: '
+                      echo '=============================================================='
+
+                      LOCAL_IMAGE_NAME="pre-scanned-admin-backend"
+
+                      REPO_NAME="component-library"
+                      IMAGE_NAME="component-library-v1"
+                      TAG="<+pipeline.stages.Build_Stage.spec.execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>"
+                      SOURCE_PROJECT="ulta-adtech-dev2"
+                      DESTINATION_PROJECT="ulta-adtech-qa"
+
+                      echo '=============================================================='
+                      echo 'STEP 2: Fetch Service Account token from Encrypted File Store'
+                      echo '=============================================================='
+                      cat > gcloud-service-account.json << 'EOF'
+                      <+secrets.getValue("ubm_nonprod")>
+                      EOF
+
+                      echo '=============================================================='
+                      echo 'STEP 3: Authenticate gcloud with service account'
+                      echo '=============================================================='
+                      gcloud auth activate-service-account --key-file="gcloud-service-account.json"
+
+                      echo '=============================================================='
+                      echo 'STEP 4: '
+                      echo '=============================================================='
+                      docker login -u _json_key --password-stdin https://us-central1-docker.pkg.dev < gcloud-service-account.json
+
+                      echo "Removing 'latest' tag from existing images in $SOURCE_PROJECT..."
+                      gcloud artifacts docker images list us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME \
+                        --filter="tags:latest" --format="get(name)" | while read -r image; do
+                          echo "Removing 'latest' tag from image: $image"
+                          gcloud artifacts docker images untag "$image" --region="us-central1" --repository="$REPO_NAME"
+                      done
+
+                      echo '=============================================================='
+                      echo 'STEP 5: Add Tag and Push the image to registry'
+                      echo '=============================================================='
+                      echo "Tagging the image from the source registry..."
+                      docker tag $LOCAL_IMAGE_NAME:$TAG us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME/$IMAGE_NAME:$TAG
+                      docker tag $LOCAL_IMAGE_NAME:$TAG us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME/$IMAGE_NAME:latest
+
+                      echo "Pushing the image from the source registry..."
+                      docker push us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME/$IMAGE_NAME:$TAG
+                      docker push us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME/$IMAGE_NAME:latest
+            "":
+              type: PrismaCloud
+              name: Run PrismaCloud Scan
+              identifier: Run_PrismaCloud_Scan
+              spec:
+                mode: orchestration
+                config: default
+                target:
+                  type: container
+                  detection: auto
+                advanced:
+                  log:
+                    level: info
+                settings:
+                  JOB_NAME: UBM-dev-ubmedia-admin-frontend-build
+                privileged: true
+                image:
+                  type: local_image
+                  tag: <+execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>
+                  name: pre-scanned-admin-backend
+                auth:
+                  access_token: <+pipeline.variables.PrismaScanTokenForPOC>
+                  access_id: 84e5d5e8-b45d-4d61-99a4-e8009ef45b29
+                  domain: https://us-east1.cloud.twistlock.com/us-2-158257716
+            enabled: true
+            paths: []
+          delegateSelectors:
+            - docker-ci-delegate-nonprod-01
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec:
+              nestedVirtualization: true
+          buildIntelligence:
+            enabled: true
+        type: CI
+        description: ""
