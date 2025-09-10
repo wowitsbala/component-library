@@ -265,8 +265,8 @@ pipeline:
 
                       LOCAL_IMAGE_NAME="pre-scanned-admin-backend"
 
-                      REPO_NAME="ubm-admin-backend"
-                      IMAGE_NAME="ubm-admin-backend-v1"
+                      REPO_NAME="component-library"
+                      IMAGE_NAME="component-library-v1"
                       TAG="<+pipeline.stages.Build_Stage.spec.execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>"
                       SOURCE_PROJECT="ulta-adtech-dev2"
                       DESTINATION_PROJECT="ulta-adtech-qa"
