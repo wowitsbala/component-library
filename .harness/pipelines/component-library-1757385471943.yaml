@@ -79,7 +79,7 @@ pipeline:
                       echo '=============================================================='
                       echo 'STEP 8: Install Latest Version Of npm'
                       echo '=============================================================='
-                      sudo npm install -g npm@latest
+                      sudo npm install
 
                       echo '=============================================================='
                       echo 'STEP 9: Display Installed Versions of Node.js and npm'
