@@ -329,7 +329,6 @@ pipeline:
                   access_token: <+pipeline.variables.PrismaScanTokenForPOC>
                   access_id: 84e5d5e8-b45d-4d61-99a4-e8009ef45b29
                   domain: https://us-east1.cloud.twistlock.com/us-2-158257716
-            caching: null
             enabled: true
             paths: []
           delegateSelectors:
