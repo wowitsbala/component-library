@@ -247,6 +247,93 @@ pipeline:
                       access_token: <+pipeline.variables.PrismaScanTokenForPOC>
                       access_id: 84e5d5e8-b45d-4d61-99a4-e8009ef45b29
                       domain: https://us-east1.cloud.twistlock.com/us-2-158257716
+              - step:
+                  type: Run
+                  name: Push Image
+                  identifier: Push_Image
+                  spec:
+                    shell: Sh
+                    command: |-
+                      echo '=============================================================='
+                      echo '======== Push Image to Registry ============'
+                      echo '=============================================================='
+                      echo ''
+
+                      echo '=============================================================='
+                      echo 'STEP 1: '
+                      echo '=============================================================='
+
+                      LOCAL_IMAGE_NAME="pre-scanned-admin-backend"
+
+                      REPO_NAME="ubm-admin-backend"
+                      IMAGE_NAME="ubm-admin-backend-v1"
+                      TAG="<+pipeline.stages.Build_Stage.spec.execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>"
+                      SOURCE_PROJECT="ulta-adtech-dev2"
+                      DESTINATION_PROJECT="ulta-adtech-qa"
+
+                      echo '=============================================================='
+                      echo 'STEP 2: Fetch Service Account token from Encrypted File Store'
+                      echo '=============================================================='
+                      cat > gcloud-service-account.json << 'EOF'
+                      <+secrets.getValue("ubm_nonprod")>
+                      EOF
+
+                      echo '=============================================================='
+                      echo 'STEP 3: Authenticate gcloud with service account'
+                      echo '=============================================================='
+                      gcloud auth activate-service-account --key-file="gcloud-service-account.json"
+
+                      echo '=============================================================='
+                      echo 'STEP 4: '
+                      echo '=============================================================='
+                      docker login -u _json_key --password-stdin https://us-central1-docker.pkg.dev < gcloud-service-account.json
+
+                      echo "Removing 'latest' tag from existing images in $SOURCE_PROJECT..."
+                      gcloud artifacts docker images list us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME \
+                        --filter="tags:latest" --format="get(name)" | while read -r image; do
+                          echo "Removing 'latest' tag from image: $image"
+                          gcloud artifacts docker images untag "$image" --region="us-central1" --repository="$REPO_NAME"
+                      done
+
+                      echo '=============================================================='
+                      echo 'STEP 5: Add Tag and Push the image to registry'
+                      echo '=============================================================='
+                      echo "Tagging the image from the source registry..."
+                      docker tag $LOCAL_IMAGE_NAME:$TAG us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME/$IMAGE_NAME:$TAG
+                      docker tag $LOCAL_IMAGE_NAME:$TAG us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME/$IMAGE_NAME:latest
+
+                      echo "Pushing the image from the source registry..."
+                      docker push us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME/$IMAGE_NAME:$TAG
+                      docker push us-central1-docker.pkg.dev/$SOURCE_PROJECT/$REPO_NAME/$IMAGE_NAME:latest
+            "":
+              type: PrismaCloud
+              name: Run PrismaCloud Scan
+              identifier: Run_PrismaCloud_Scan
+              spec:
+                mode: orchestration
+                config: default
+                target:
+                  type: container
+                  detection: auto
+                advanced:
+                  log:
+                    level: info
+                settings:
+                  JOB_NAME: UBM-dev-ubmedia-admin-frontend-build
+                privileged: true
+                image:
+                  type: local_image
+                  tag: <+execution.steps.Run_1.output.outputVariables.GCP_TAG_NAME>
+                  name: pre-scanned-admin-backend
+                auth:
+                  access_token: <+pipeline.variables.PrismaScanTokenForPOC>
+                  access_id: 84e5d5e8-b45d-4d61-99a4-e8009ef45b29
+                  domain: https://us-east1.cloud.twistlock.com/us-2-158257716
+            caching: null
+            enabled: true
+            paths: []
+          delegateSelectors:
+            - docker-ci-delegate-nonprod-01
           platform:
             os: Linux
             arch: Amd64
