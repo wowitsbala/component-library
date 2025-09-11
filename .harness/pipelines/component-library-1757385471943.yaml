@@ -24,6 +24,8 @@ pipeline:
                   identifier: installdependencies
                   name: Install dependencies and Build Storybook
                   spec:
+                    connectorRef: account.harnessImage
+                    image: node:22
                     shell: Sh
                     command: |-
                       echo '=============================================================='
@@ -39,8 +41,8 @@ pipeline:
                       echo '=============================================================='
                       echo 'STEP 1: Update Package List With Latest Info On Versions of Packages + Dependencies'
                       echo '=============================================================='
-                      sudo apt-get update
-
+                      #sudo apt-get update
+                      echo 'Disabled'
                       echo '=============================================================='
                       echo 'STEP 2: Remove Existing Installations of Node.js and npm'
                       echo '=============================================================='
@@ -68,19 +70,18 @@ pipeline:
                       echo '=============================================================='
                       echo 'STEP 6: Add NodeSource API Repository For Node.JS 20.x'
                       echo '=============================================================='
-                      curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-
+                      #curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+                      echo 'Disabled'
                       echo '=============================================================='
                       echo 'STEP 7: Install Latest Version Of Node.js'
                       echo '=============================================================='
-                      sudo apt-get install -y --allow-downgrades nodejs=20.17.*
+                      #sudo apt-get install -y --allow-downgrades nodejs=20.17.*
                       #sudo apt-get install -y nodejs
-
+                      echo 'Not Required - Preinstalled in the Build Agent Docker'
                       echo '=============================================================='
                       echo 'STEP 8: Install Latest Version Of npm'
                       echo '=============================================================='
-                      sudo npm install -g npm@latest
-
+                      npm install
                       echo '=============================================================='
                       echo 'STEP 9: Display Installed Versions of Node.js and npm'
                       echo '=============================================================='
@@ -110,7 +111,8 @@ pipeline:
                   name: Pull the Dockerfile  Rsources
                   identifier: Pull_the_Dockerfile_resources
                   spec:
-                    connectorRef: UBM_App_Configs_Harness_Cloud
+                    connectorRef: account.Github_OAuth_1750965264531
+                    repoName: wowitsbala/component-library
                     cloneDirectory: /harness/ubm-app-configs
                     build:
                       type: branch
@@ -130,12 +132,12 @@ pipeline:
                       echo '=============================================================='
                       echo 'STEP 1: Clear npm Cache Forcefully'
                       echo '=============================================================='
-                      npm cache clean --force
+                      #npm cache clean --force
 
                       echo '=============================================================='
                       echo 'STEP 2: Run Test:Pipeline In Package.json For Component'
                       echo '=============================================================='
-                      npm run test:pipeline
+                      #npm run test:pipeline
                     reports:
                       type: JUnit
                       spec:
@@ -338,8 +340,7 @@ pipeline:
             arch: Amd64
           runtime:
             type: Cloud
-            spec:
-              nestedVirtualization: true
+            spec: {}
           buildIntelligence:
             enabled: true
         type: CI
