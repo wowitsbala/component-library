@@ -340,8 +340,7 @@ pipeline:
             arch: Amd64
           runtime:
             type: Cloud
-            spec:
-              nestedVirtualization: true
+            spec: {}
           buildIntelligence:
             enabled: true
         type: CI
