@@ -111,7 +111,8 @@ pipeline:
                   name: Pull the Dockerfile  Rsources
                   identifier: Pull_the_Dockerfile_resources
                   spec:
-                    connectorRef: UBM_App_Configs_Harness_Cloud
+                    connectorRef: account.Github_OAuth_1750965264531
+                    repoName: wowitsbala/component-library
                     cloneDirectory: /harness/ubm-app-configs
                     build:
                       type: branch
